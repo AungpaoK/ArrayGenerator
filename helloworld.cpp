@@ -88,7 +88,7 @@ int main(){
     //random number using time seed
     unsigned long long seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::mt19937 rng(seed);
-    std::uniform_int_distribution<long long> dist_size(50000, 60000);
+    std::uniform_int_distribution<long long> dist_size(50000, 100000);
     std::uniform_int_distribution<long long> mergedist_size(10000000, 15000000);
 
     long long size = dist_size(rng);
