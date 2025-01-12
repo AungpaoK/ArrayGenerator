@@ -1,4 +1,7 @@
+.gitignore
 .vscode/
+helloworld
+*.dSYM
 *.obj
 *.exe
 *.ilk
