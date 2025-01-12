@@ -1,66 +1,162 @@
 #include <iostream>
+#include <thread>
 #include <vector>
 #include <random>
 #include <chrono>
 
-long long findMax(const std::vector<long long>& vec){
+void findMax(const std::vector<long long>& vec, long long &findMaxTime){
+    auto start = std::chrono::high_resolution_clock::now();
     long long max = vec[0];
     for (size_t i = 1; i < vec.size(); i++){
         if (vec[i] > max){
             max = vec[i];
         }
     }
-    return max;
+    auto end = std::chrono::high_resolution_clock::now();
+    findMaxTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 }
 
-void bubbleSort(std::vector<long long>& vec){
-    int n = vec.size();
-    bool swapped;
-    for (int i = 0; i < n - 1; i++){
-        swapped = false;
-        for (int j = 0; j < n - i - 1; j++){
-            if (vec[j] > vec[j+1]){
-                std::swap(vec[j], vec[j+1]);
-                swapped = true;
-            }
-        }
-        if (!swapped){
-            break;
-        }
+void merge(std::vector<long long>&vec, long long left, long long right, long long mid){
+    long long sizeLeft = mid - left + 1;
+    long long sizeRight = right - mid;
+
+    std::vector<long long> leftArr(sizeLeft);
+    std::vector<long long> rightArr(sizeRight);
+    
+    for (long long i = 0; i < sizeLeft; i ++){
+        leftArr[i] = vec[left + i];
+    }
+
+    for (long long j = 0; j < sizeRight; j ++){
+        rightArr[j] = vec[mid + 1 + j];
+    }
+    long long i = 0;
+    long long j = 0;
+    long long k = left;
+
+    while (i < sizeLeft && j < sizeRight){
+        if (leftArr[i] <= rightArr[j]){
+            vec[k] = leftArr[i];
+            i++;
+        } else {
+            vec[k] = rightArr[j];
+            j++;
+        }   
+        k++;
+    }
+    while (i < sizeLeft){
+        vec[k] = leftArr[i];
+        i++;
+        k++;
+    }
+    while (j < sizeRight){
+        vec[k] = rightArr[j];
+        j++;
+        k++;
     }
 }
 
+void mergeSort(std::vector<long long>& vec, long long left, long long right, long long &mergeSortTime){
+    auto start = std::chrono::high_resolution_clock::now();
+    if (left < right) {
+        long long mid = left +(right-left)/2;
+        mergeSort(vec, left, mid, mergeSortTime);
+        mergeSort(vec, mid+1, right, mergeSortTime);
+        merge(vec, left, right, mid);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    mergeSortTime = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+}
 
-int main() {
+void bubbleSort(std::vector<long long>& vec, long long &bubbleSortTime){
+    auto start = std::chrono::high_resolution_clock::now();
+    int n = vec.size();
+    for (int i = 0; i < n - 1; i++){
+        for (int j = 0; j < n - i - 1; j++){
+            if (vec[j] > vec[j+1]){
+                std::swap(vec[j], vec[j+1]);
+            }
+        }
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    bubbleSortTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+}
 
+int main(){
     auto start = std::chrono::high_resolution_clock::now();
 
     //random number using time seed
     unsigned long long seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::mt19937 rng(seed);
-    std::uniform_int_distribution<long long> dist_size(1, 1000000);
+    std::uniform_int_distribution<long long> dist_size(50000, 60000);
+    std::uniform_int_distribution<long long> mergedist_size(10000000, 15000000);
 
-    long long size = dist_size(rng);    
+    long long size = dist_size(rng);
+    long long mergeSize  = mergedist_size(rng);
     
     //dynamic array size
-    std::vector<long long> vec(size);
-    
-    std::uniform_int_distribution<long long> dist_value(1, 100000000000);
+    std::cout << ("----------------------------------") << std::endl;
+    std::cout << ("Creating array for numbers ...") << std::endl;
+    std::cout << ("----------------------------------") << std::endl;
+    std::vector<long long> vec1(size);
+    std::vector<long long> vec2(mergeSize);
+
+    std::uniform_int_distribution<long long> dist_value(10, 100000000000);
     for (long long i = 0; i < size; i++){
-        vec[i] = dist_value(rng);
+        vec1[i] = dist_value(rng);
     }
 
-    long long max = findMax(vec); 
-    std::cout << "Array size: " << size << std::endl;
-    std::cout << "Last value before sort: " << vec.back() << std::endl;
-    bubbleSort(vec);
-    std::cout << "Last value after sort: " << vec.back() << std::endl;
-    std::cout << "The max value: " << max << std::endl;
+    for (long long j = 0; j < mergeSize; j++){
+        vec2[j] = dist_value(rng);
+    }
+
+    auto endAppend = std::chrono::high_resolution_clock::now();
+    auto durationLoop = std::chrono::duration_cast<std::chrono::milliseconds>(endAppend - start);
+
+
+    std::cout << "Bubble sort array size: " << size << std::endl;
+    std::cout << "Merge sort array size: " << mergeSize << std::endl;
+    std::cout << "Last value of array 1 before sort: " << vec1.back() << std::endl;
+    std::cout << "Last value of array 2 before sort: " << vec2.back() << std::endl;
+    std::cout << ("----------------------------------") << std::endl;
+    std::cout << "Sorting ..." << std::endl;
+    std::cout << ("----------------------------------") << std::endl;
+
+    long long bubbleSortTime = 0;
+    long long mergeSortTime = 0;
+    long long findMaxTime = 0;
+
+    findMax(vec1, findMaxTime);
+    long long max1 = *std::max_element(vec1.begin(), vec1.end());
+
+    findMax(vec2, findMaxTime);
+    long long max2 = *std::max_element(vec2.begin(), vec2.end());
+
+    std::thread t1(bubbleSort, std::ref (vec1), std::ref(bubbleSortTime));
+    std::thread t2(mergeSort, std::ref(vec2), 0, mergeSize - 1, std::ref(mergeSortTime));
+
+    t1.join();
+    t2.join();
+
+    std::cout << ("Sorted!") << std::endl;
+    std::cout << ("----------------------------------") << std::endl;
+    std::cout << "Last value after bubble sort: " << vec1.back() << std::endl;
+    std::cout << "The max value of array 1: " << max1 << std::endl;
+    std::cout << "Last value afte merge sort: " << vec2.back() << std::endl;
+    std::cout << "The max value of array 2: " << max2 << std::endl;
+    std::cout << ("----------------------------------") << std::endl;
 
     auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-    std::cout << "Time took to execute: " << duration.count() << " seconds";
+    std::cout << ("Results") << std::endl;
+    std::cout << ("----------------------------------") << std::endl;
+    std::cout << "Program execution time: " << duration.count() << " milliseconds" << std::endl;
+    std::cout << "Loop process took: " << durationLoop.count() << " milliseconds" << std::endl;
+    std::cout << "Finding max value took: " << findMaxTime << " milliseconds" << std::endl;
+    std::cout << "Bubble sort took: " << bubbleSortTime << " milliseconds" << std::endl;
+    std::cout << "Merge sort took: " << mergeSortTime << " milliseconds" << std::endl;
+    std::cout << ("----------------------------------") << std::endl;
 
     return 0;
 }
