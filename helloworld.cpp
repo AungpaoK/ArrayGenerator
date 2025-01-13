@@ -65,7 +65,7 @@ void mergeSort(std::vector<long long>& vec, long long left, long long right, lon
         merge(vec, left, right, mid);
     }
     auto end = std::chrono::high_resolution_clock::now();
-    mergeSortTime = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+    mergeSortTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 }
 
 void bubbleSort(std::vector<long long>& vec, long long &bubbleSortTime){
