@@ -4,12 +4,12 @@
 #include <random>
 #include <chrono>
 
-void findMax(const std::vector<long long>& vec, long long &findMaxTime){
+void findMax(const std::vector<long long>& vec, long long &findMaxTime, long long &maxValue){
     auto start = std::chrono::high_resolution_clock::now();
-    long long max = vec[0];
+    maxValue = vec[0];
     for (size_t i = 1; i < vec.size(); i++){
-        if (vec[i] > max){
-            max = vec[i];
+        if (vec[i] > maxValue){
+            maxValue = vec[i];
         }
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -56,14 +56,18 @@ void merge(std::vector<long long>&vec, long long left, long long right, long lon
     }
 }
 
-void mergeSort(std::vector<long long>& vec, long long left, long long right, long long &mergeSortTime){
-    auto start = std::chrono::high_resolution_clock::now();
+void mergeSort(std::vector<long long>& vec, long long left, long long right){
     if (left < right) {
         long long mid = left +(right-left)/2;
-        mergeSort(vec, left, mid, mergeSortTime);
-        mergeSort(vec, mid+1, right, mergeSortTime);
+        mergeSort(vec, left, mid);
+        mergeSort(vec, mid+1, right);
         merge(vec, left, right, mid);
     }
+}
+
+void mergeSortTimed(std::vector<long long>& vec, long long left, long long right,long long &mergeSortTime){    
+    auto start = std::chrono::high_resolution_clock::now();
+    mergeSort(vec, left, right);
     auto end = std::chrono::high_resolution_clock::now();
     mergeSortTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 }
@@ -88,21 +92,21 @@ int main(){
     //random number using time seed
     unsigned long long seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::mt19937 rng(seed);
-    std::uniform_int_distribution<long long> dist_size(50000, 100000);
-    std::uniform_int_distribution<long long> mergedist_size(10000000, 15000000);
+    std::uniform_int_distribution<long long> bubbleDist_size(10000000, 15000000);
+    std::uniform_int_distribution<long long> mergeDist_size(10000000, 15000000);
 
-    long long size = dist_size(rng);
-    long long mergeSize  = mergedist_size(rng);
+    long long bubbleSize = bubbleDist_size(rng);
+    long long mergeSize  = mergeDist_size(rng);
     
     //dynamic array size
     std::cout << ("----------------------------------") << std::endl;
     std::cout << ("Creating array for numbers ...") << std::endl;
     std::cout << ("----------------------------------") << std::endl;
-    std::vector<long long> vec1(size);
+    std::vector<long long> vec1(bubbleSize);
     std::vector<long long> vec2(mergeSize);
 
     std::uniform_int_distribution<long long> dist_value(10, 100000000000);
-    for (long long i = 0; i < size; i++){
+    for (long long i = 0; i < bubbleSize; i++){
         vec1[i] = dist_value(rng);
     }
 
@@ -114,7 +118,7 @@ int main(){
     auto durationLoop = std::chrono::duration_cast<std::chrono::milliseconds>(endAppend - start);
 
 
-    std::cout << "Bubble sort array size: " << size << std::endl;
+    std::cout << "Bubble sort array size: " << bubbleSize << std::endl;
     std::cout << "Merge sort array size: " << mergeSize << std::endl;
     std::cout << "Last value of array 1 before sort: " << vec1.back() << std::endl;
     std::cout << "Last value of array 2 before sort: " << vec2.back() << std::endl;
@@ -125,15 +129,14 @@ int main(){
     long long bubbleSortTime = 0;
     long long mergeSortTime = 0;
     long long findMaxTime = 0;
+    long long max1 = 0;
+    long long max2 = 0;
 
-    findMax(vec1, findMaxTime);
-    long long max1 = *std::max_element(vec1.begin(), vec1.end());
-
-    findMax(vec2, findMaxTime);
-    long long max2 = *std::max_element(vec2.begin(), vec2.end());
+    findMax(vec1, findMaxTime, max1);
+    findMax(vec2, findMaxTime, max2);
 
     std::thread t1(bubbleSort, std::ref (vec1), std::ref(bubbleSortTime));
-    std::thread t2(mergeSort, std::ref(vec2), 0, mergeSize - 1, std::ref(mergeSortTime));
+    std::thread t2(mergeSortTimed, std::ref(vec2), 0, mergeSize - 1, std::ref(mergeSortTime));
 
     t1.join();
     t2.join();
